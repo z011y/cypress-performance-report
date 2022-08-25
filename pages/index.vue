@@ -1,18 +1,18 @@
 <template>
   <div class="container">
     <h1>Test Results</h1>
-    <line-graph :data="chartData" />
+    <line-chart :dataPoints="chartData" />
     <div>Table</div>
   </div>
 </template>
 
 <script>
-import LineGraph from '../components/LineGraph'
+import LineChart from '../components/LineChart'
 
 export default {
   name: 'IndexPage',
   components: {
-    LineGraph,
+    LineChart,
   },
   data() {
     return {
@@ -59,6 +59,7 @@ export default {
 body {
   display: flex;
   justify-content: center;
+  font-family: 'Poppins';
 }
 .container {
   width: 66vw;

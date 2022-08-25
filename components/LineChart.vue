@@ -1,16 +1,38 @@
 <template>
-  <svg class="chart" />
+  <div>
+    <svg class="chart" />
+    <div
+      v-if="tooltipData && tooltipPositioning"
+      class="dot-tooltip"
+      :style="`left: ${tooltipPositioning.x + 12}px; top: ${
+        tooltipPositioning.y + 12
+      }px;`"
+    >
+      <h3>Run Date</h3>
+      <p>{{ tooltipData.date.toDateString() }}</p>
+      <h3>Total Time</h3>
+      <p>{{ tooltipData.time }}</p>
+    </div>
+  </div>
 </template>
 
 <script>
 import * as d3 from 'd3'
 
 export default {
-  name: 'line-graph',
+  name: 'line-chart',
   props: {
-    data: {
+    dataPoints: {
       required: true,
       type: Array,
+    },
+    tooltipData: {
+      required: false,
+      type: Object,
+    },
+    tooltipPositioning: {
+      required: false,
+      type: Object,
     },
   },
   methods: {
@@ -45,21 +67,14 @@ export default {
         strokeOpacity = 1, // stroke opacity of line
       } = {}
     ) {
-      const tooltip = d3
-        .select('body')
-        .append('div')
-        .style('opacity', 0)
-        .attr('class', 'dot-tooltip')
+      const addTooltipProperties = (event, d) => {
+        this.tooltipData = { date: d.date, time: d.time }
+        this.tooltipPositioning = { x: event.x, y: event.y }
+      }
 
-      const dotTooltip = (event, d) => {
-        const tooltipHtml = `
-          <p>Run Date: ${d.date}</p>
-          <p>Total Time: ${d.time}</p>
-        `
-        tooltip
-          .html(`${tooltipHtml}`)
-          .style('left', `${event.x + 20}px`)
-          .style('top', `${event.y + 20}px`)
+      const resetTooltipProperties = () => {
+        this.tooltipData = null
+        this.tooltipPositioning = null
       }
 
       // Compute values.
@@ -82,11 +97,12 @@ export default {
 
       // Customize axis ticks
       xAxis.tickSize(-(height - marginTop - marginBottom))
+      xAxis.tickPadding(12)
+      xAxis.tickFormat(d3.timeFormat('%b')) // February -> Feb
+
       yAxis.tickSizeInner(-(width - marginLeft - marginRight))
       yAxis.tickSizeOuter(0)
-      xAxis.tickPadding(12)
       yAxis.tickPadding(12)
-      xAxis.tickFormat(d3.timeFormat('%b')) // February -> Feb
       yAxis.tickFormat(d3.format('~s')) // 1,000 -> 1K
       yAxis.ticks(9)
 
@@ -98,6 +114,7 @@ export default {
         .x((i) => xScale(X[i]))
         .y((i) => yScale(Y[i]))
 
+      // Define svg element
       const svg = d3
         .select('.chart')
         .attr('width', '100%')
@@ -105,6 +122,7 @@ export default {
         .attr('viewBox', [0, 0, width, height])
         .attr('style', 'max-width: 100%; height: auto; height: intrinsic;')
 
+      // Define x axis
       svg
         .append('g')
         .attr('transform', `translate(0,${height - marginBottom})`)
@@ -112,6 +130,7 @@ export default {
         .call((g) => g.selectAll('.domain').attr('stroke', '#e5e7eb'))
         .call((g) => g.selectAll('.tick line').attr('stroke', '#e5e7eb'))
 
+      // Define y axis
       svg
         .append('g')
         .attr('transform', `translate(${marginLeft},0)`)
@@ -120,6 +139,7 @@ export default {
         .call((g) => g.selectAll('.tick line').attr('stroke', '#e5e7eb'))
         .attr('stroke-dasharray', '5,5')
 
+      // Plot line
       svg
         .append('path')
         .attr('fill', 'none')
@@ -130,7 +150,7 @@ export default {
         .attr('stroke-opacity', strokeOpacity)
         .attr('d', line(I))
 
-      // Construct dot plots
+      // Plot dots
       svg
         .selectAll('dot')
         .data(data)
@@ -149,27 +169,25 @@ export default {
         .style('fill', 'white')
         .on('mouseover', function (event, d) {
           d3.select(this).transition().duration(100).attr('r', 8)
-          dotTooltip(event, d)
-          tooltip.style('opacity', 1)
+          addTooltipProperties(event, d)
         })
         .on('mouseout', function () {
           d3.select(this).transition().duration(100).attr('r', 4)
-          tooltip.style('opacity', 0)
+          resetTooltipProperties()
         })
 
       return svg.node()
     },
-    createChart(dataPoints) {
+    renderChart(dataPoints) {
       this.drawChart(dataPoints, {
         x: (d) => d.date,
         y: (d) => d.time,
-        yLabel: 'Time (ms)',
         color: '#20C4F4',
       })
     },
   },
   mounted() {
-    this.createChart(this.data)
+    this.renderChart(this.dataPoints)
   },
 }
 </script>
@@ -177,14 +195,23 @@ export default {
 <style>
 text {
   font-size: 14;
-  font-family: monospace;
+  font-family: 'JetBrains Mono', monospace;
   text-transform: uppercase;
 }
 .dot-tooltip {
   position: absolute;
   z-index: 1000;
-  width: 200px;
-  height: 200px;
-  background-color: grey;
+  background-color: #eff1f8;
+  border: 1px solid #dae0ea;
+  border-radius: 8px;
+  padding: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  box-shadow: 0 2px 4px rgb(105 112 117 / 15%);
+}
+.dot-tooltip > h3 {
+  font-size: 14;
+}
+.dot-tooltip > p {
+  font-size: 12;
 }
 </style>
