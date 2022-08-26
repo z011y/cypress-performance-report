@@ -10,6 +10,7 @@
     >
       <h3>Run Date</h3>
       <p>{{ tooltipData.date.toDateString() }}</p>
+      <hr />
       <h3>Total Time</h3>
       <p>{{ tooltipData.time }}</p>
     </div>
@@ -205,13 +206,17 @@ text {
   border: 1px solid #dae0ea;
   border-radius: 8px;
   padding: 12px;
-  font-family: 'JetBrains Mono', monospace;
   box-shadow: 0 2px 4px rgb(105 112 117 / 15%);
 }
 .dot-tooltip > h3 {
-  font-size: 14;
+  margin-block-end: 0;
+  margin-block-start: 0;
+  font-size: 14px;
 }
 .dot-tooltip > p {
-  font-size: 12;
+  font-size: 12px;
+  margin-block-end: 0;
+  margin-block-start: 0;
+  font-family: 'JetBrains Mono', monospace;
 }
 </style>
