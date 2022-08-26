@@ -8,11 +8,14 @@
         tooltipPositioning.y + 12
       }px;`"
     >
+      <h3>Test Title</h3>
+      <p>{{ tooltipData.test }}</p>
+      <hr />
       <h3>Run Date</h3>
       <p>{{ tooltipData.date.toDateString() }}</p>
       <hr />
       <h3>Total Time</h3>
-      <p>{{ tooltipData.time }}</p>
+      <p>{{ `${tooltipData.time} ms` }}</p>
     </div>
   </div>
 </template>
@@ -27,14 +30,12 @@ export default {
       required: true,
       type: Array,
     },
-    tooltipData: {
-      required: false,
-      type: Object,
-    },
-    tooltipPositioning: {
-      required: false,
-      type: Object,
-    },
+  },
+  data() {
+    return {
+      tooltipData: null,
+      tooltipPositioning: null,
+    }
   },
   methods: {
     // Copyright 2021 Observable, Inc.
@@ -45,6 +46,8 @@ export default {
       {
         x = ([x]) => x, // given d in data, returns the (temporal) x-value
         y = ([, y]) => y, // given d in data, returns the (quantitative) y-value
+        z = () => 1,
+        title, // given d in data, returns the title text
         defined, // for gaps in data
         curve = d3.curveLinear, // method of interpolation between points
         marginTop = 20, // top margin, in pixels
@@ -61,15 +64,17 @@ export default {
         yRange = [height - marginBottom, marginTop], // [bottom, top]
         yFormat, // a format specifier string for the y-axis
         yLabel, // a label for the y-axis
+        zDomain, // array of z-values
         color = 'red', // stroke color of line
         strokeLinecap = 'round', // stroke line cap of the line
         strokeLinejoin = 'round', // stroke line join of the line
         strokeWidth = 2, // stroke width of line, in pixels
         strokeOpacity = 1, // stroke opacity of line
+        mixBlendMode = 'multiply', // blend mode of lines
       } = {}
     ) {
       const addTooltipProperties = (event, d) => {
-        this.tooltipData = { date: d.date, time: d.time }
+        this.tooltipData = { test: d.test, date: d.date, time: d.time }
         this.tooltipPositioning = { x: event.x, y: event.y }
       }
 
@@ -81,7 +86,8 @@ export default {
       // Compute values.
       const X = d3.map(data, x)
       const Y = d3.map(data, y)
-      const I = d3.range(X.length)
+      const Z = d3.map(data, z)
+      const O = d3.map(data, (d) => d)
       if (defined === undefined)
         defined = (d, i) => !isNaN(X[i]) && !isNaN(Y[i])
       const D = d3.map(data, defined)
@@ -89,12 +95,21 @@ export default {
       // Compute default domains.
       if (xDomain === undefined) xDomain = d3.extent(X)
       if (yDomain === undefined) yDomain = d3.extent(Y)
+      if (zDomain === undefined) zDomain = Z
+      zDomain = new d3.InternSet(zDomain)
+
+      // Omit any data not present in the z-domain.
+      const I = d3.range(X.length).filter((i) => zDomain.has(Z[i]))
 
       // Construct scales and axes.
       const xScale = xType(xDomain, xRange)
       const yScale = yType(yDomain, yRange)
       const xAxis = d3.axisBottom(xScale)
       const yAxis = d3.axisLeft(yScale)
+
+      // Compute titles.
+      const T =
+        title === undefined ? Z : title === null ? null : d3.map(data, title)
 
       // Customize axis ticks
       xAxis.tickSize(-(height - marginTop - marginBottom))
@@ -140,16 +155,21 @@ export default {
         .call((g) => g.selectAll('.tick line').attr('stroke', '#e5e7eb'))
         .attr('stroke-dasharray', '5,5')
 
-      // Plot line
+      // Plot lines
       svg
-        .append('path')
+        .append('g')
         .attr('fill', 'none')
-        .attr('stroke', color)
+        .attr('stroke', typeof color === 'string' ? color : null)
         .attr('stroke-width', strokeWidth)
         .attr('stroke-linecap', strokeLinecap)
         .attr('stroke-linejoin', strokeLinejoin)
         .attr('stroke-opacity', strokeOpacity)
-        .attr('d', line(I))
+        .selectAll('path')
+        .data(d3.group(I, (i) => Z[i]))
+        .join('path')
+        .style('mix-blend-mode', mixBlendMode)
+        .attr('stroke', typeof color === 'function' ? ([z]) => color(z) : null)
+        .attr('d', ([, I]) => line(I))
 
       // Plot dots
       svg
@@ -165,7 +185,10 @@ export default {
         .attr('cy', function (d) {
           return yScale(d.time)
         })
-        .attr('stroke', '#20C4F4')
+        .attr('stroke', (d) => {
+          console.log(d)
+          return d.test === 'Recognition Details Report' ? '#20C4F4' : 'red'
+        })
         .attr('stroke-width', 2)
         .style('fill', 'white')
         .on('mouseover', function (event, d) {
@@ -177,13 +200,14 @@ export default {
           resetTooltipProperties()
         })
 
-      return svg.node()
+      return Object.assign(svg.node(), { value: null })
     },
     renderChart(dataPoints) {
       this.drawChart(dataPoints, {
         x: (d) => d.date,
         y: (d) => d.time,
-        color: '#20C4F4',
+        z: (d) => d.test,
+        color: (z) => (z === 'Recognition Details Report' ? '#20C4F4' : 'red'),
       })
     },
   },
