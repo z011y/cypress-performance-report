@@ -12,7 +12,7 @@
       <p>{{ tooltipData.test }}</p>
       <hr />
       <h3>Run Date</h3>
-      <p>{{ tooltipData.date.toDateString() }}</p>
+      <p>{{ tooltipData.date.toDateString().toUpperCase() }}</p>
       <hr />
       <h3>Total Time</h3>
       <p>{{ `${tooltipData.time} ms` }}</p>
@@ -187,7 +187,7 @@ export default {
         })
         .attr('stroke', (d) => {
           console.log(d)
-          return d.test === 'Recognition Details Report' ? '#20C4F4' : 'red'
+          return d.test === 'Recognition Details' ? '#20C4F4' : 'red'
         })
         .attr('stroke-width', 2)
         .style('fill', 'white')
@@ -207,7 +207,7 @@ export default {
         x: (d) => d.date,
         y: (d) => d.time,
         z: (d) => d.test,
-        color: (z) => (z === 'Recognition Details Report' ? '#20C4F4' : 'red'),
+        color: (z) => (z === 'Recognition Details' ? '#20C4F4' : 'red'),
       })
     },
   },
@@ -235,12 +235,13 @@ text {
 .dot-tooltip > h3 {
   margin-block-end: 0;
   margin-block-start: 0;
-  font-size: 14px;
+  font-size: 12px;
 }
 .dot-tooltip > p {
-  font-size: 12px;
+  font-size: 10px;
   margin-block-end: 0;
   margin-block-start: 0;
   font-family: 'JetBrains Mono', monospace;
+  opacity: 0.5;
 }
 </style>
