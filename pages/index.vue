@@ -3,22 +3,18 @@
     <h1>All Time</h1>
     <line-chart :dataPoints="chartData" />
     <h1>Results</h1>
-    <div class="results-table">
-      <div class="results-table-header">Test Title</div>
-      <div class="results-table-header">Run Date</div>
-      <div class="results-table-header">Total Time (ms)</div>
-      <div
-        class="results-table-row"
-        v-for="dataPoint in flattenedData()"
-        :key="dataPoint"
-      >
-        {{
-          typeof dataPoint === 'object'
-            ? dataPoint.toDateString().toUpperCase()
-            : dataPoint
-        }}
-      </div>
-    </div>
+    <table>
+      <tr>
+        <th>Test Title</th>
+        <th>Run Date</th>
+        <th>Total Time</th>
+      </tr>
+      <tr v-for="dataPoint in chartData" :key="dataPoint.test">
+        <td>{{ dataPoint.test }}</td>
+        <td>{{ dataPoint.date.toDateString().toUpperCase() }}</td>
+        <td>{{ `${dataPoint.time} ms` }}</td>
+      </tr>
+    </table>
   </div>
 </template>
 
@@ -116,15 +112,6 @@ export default {
       ],
     }
   },
-  methods: {
-    flattenedData() {
-      return this.chartData
-        .map((data) => {
-          return Object.values(data)
-        })
-        .flat()
-    },
-  },
 }
 </script>
 
@@ -142,31 +129,26 @@ h1 {
   padding: 24px;
   background-color: white;
 }
-.results-table {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  background-color: #dae0ea;
+table {
   width: 100%;
-  border-radius: 12px;
-  grid-gap: 1px;
-  border: 1px solid #dae0ea;
-  overflow: hidden;
 }
-.results-table-header {
-  display: flex;
-  align-items: center;
-  height: 48px;
-  padding-left: 12px;
-  background-color: #eff1f8;
+table,
+td,
+th {
+  border: 1px solid #e9eaec;
+  border-collapse: collapse;
+}
+td,
+th {
+  padding: 8px 16px;
+}
+th {
+  background-color: #eff2f5;
   font-size: 14px;
 }
-.results-table-row {
-  display: flex;
-  align-items: center;
-  height: 48px;
-  padding-left: 12px;
+td {
   background-color: #f4f6fc;
-  font-size: 10px;
-  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-family: 'JetBrains Mono';
 }
 </style>
